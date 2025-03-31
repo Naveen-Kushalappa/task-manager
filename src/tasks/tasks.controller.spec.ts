@@ -8,9 +8,23 @@ describe('TasksController', () => {
   let service: TasksService;
 
   beforeEach(async () => {
+    const mockTaskModel = {
+      create: jest.fn(),
+      find: jest.fn(),
+      findById: jest.fn(),
+      findByIdAndUpdate: jest.fn(),
+      findByIdAndDelete: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TasksController],
-      providers: [TasksService]
+      providers: [
+        TasksService,
+        {
+          provide: 'TaskModel',
+          useValue: mockTaskModel
+        }
+      ]
     }).compile();
 
     controller = module.get<TasksController>(TasksController);
@@ -21,44 +35,44 @@ describe('TasksController', () => {
     expect(controller).toBeDefined();
   });
 
-  it('should create a task', () => {
+  it('should create a task', async () => {
     const task: Task = {id: '1', isDone: false, title: 'Test task title', description: 'Test task description'};
-    jest.spyOn(service, 'createTask').mockReturnValue(task);
+    jest.spyOn(service, 'createTask').mockResolvedValue(task);
 
-    expect(controller.addTask('Test task title', 'Test task description')).toEqual(task);
+    expect(await controller.addTask('Test task title', 'Test task description')).toEqual(task);
   });
 
-  it('should return all tasks', () => {
+  it('should return all tasks', async() => {
     const tasks: Task[] = [{id: '1', isDone: false, title: 'Test task title', description: 'Test task description'}];
 
-    jest.spyOn(service, 'getAllTasks').mockReturnValue(tasks);
+    jest.spyOn(service, 'getAllTasks').mockResolvedValue(tasks);
 
-    expect(controller.getAllTasks().length).toEqual(1);
+    const result = await controller.getAllTasks();
+    expect(result.length).toEqual(1);
 
   });
 
-  it('should return a task by id', () => {
-
+  it('should return a task by id', async() => {
     const task: Task = {id: '1', isDone: false, title: 'Test title', 'description': 'Test description'};
-    jest.spyOn(service, 'getTaskById').mockReturnValue(task);
+    jest.spyOn(service, 'getTaskById').mockResolvedValue(task);
 
-    expect(controller.getTaskById('1')).toEqual(task);
+    expect(await controller.getTaskById('1')).toEqual(task);
   });
 
-  it('should update a task by id', () => {
+  it('should update a task by id', async() => {
     const task: Task = {id: '1', isDone: true, title: 'Test title', 'description': 'Test description'};
 
-    jest.spyOn(service, 'updateTask').mockReturnValue(task);
+    jest.spyOn(service, 'updateTask').mockResolvedValue(task);
 
-    expect(controller.updateTask('1', true)).toEqual(task);
+    expect(await controller.updateTask('1', true)).toEqual(task);
   });
-  
-  it('should delete a task by id', () => {
+
+  it('should delete a task by id',async() => {
     const task: Task = {id: '1', isDone: true, title: 'Test title', 'description': 'Test description'};
 
-    jest.spyOn(service, 'deleteTask').mockImplementation(() => {});
+    jest.spyOn(service, 'deleteTask').mockImplementation(undefined);
 
-    expect(controller.deleteTask('1')).toBeUndefined();
+    expect(await controller.deleteTask('1')).toBeUndefined();
   });
 
 

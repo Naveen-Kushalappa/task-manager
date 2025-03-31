@@ -1,38 +1,42 @@
-import { Injectable } from '@nestjs/common';
-import { Task } from './tasks.model';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Task, TaskDocument } from './schemas/task.schema';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class TasksService {
 
-    private tasks: Task[] = [];
-
-    getAllTasks(): Task[] {
-        return this.tasks;
+    constructor(@InjectModel(Task.name) private taskModel:  Model<TaskDocument>){}
+    
+    async getAllTasks(): Promise<Task[]> {
+        return this.taskModel.find().exec();
     } 
 
-    getTaskById(id: string): Task {
-        return this.tasks.find(task => task.id === id);
+    async getTaskById(id: string): Promise<Task> {
+        const task = this.taskModel.findOne({id}).exec(); //use findById if default _id of mongo is used
+        if(!task) throw new NotFoundException(`Id: ${id} not found`);
+        return task;
     }
 
-    createTask(title: string, description: string): Task{
-
-        const newTask: Task = { id: randomUUID(), title, description, isDone: false};
-        this.tasks.push(newTask);
-        return newTask;
+    async createTask(title: string, description: string): Promise<Task>{
+        const newTask = { id: randomUUID(), title, description};
+        const task = new this.taskModel(newTask);
+        return task.save();
     } 
 
-    updateTask(id: string, isDone: boolean): Task{
-        const task = this.getTaskById(id);
-        if(task){ 
-            task.isDone = isDone;
+    async updateTask(id: string, isDone: boolean): Promise<Task>{
+        const task = this.taskModel.findOneAndUpdate({id}, {isDone: true}, {new: true}).exec();
+        if(!task){ 
+            throw new NotFoundException(`Id ${id} not found`);
         }
         return task;
     }
 
-    deleteTask(id: string): void{
-        this.tasks = this.tasks.filter(task => task.id !== id);        
+    async deleteTask(id: string): Promise<void>{
+        const result = this.taskModel.findOneAndDelete({id}).exec();
+        if(!result){
+            throw new NotFoundException(`Id ${id} not found`);
+        }
     }
-
-
 }

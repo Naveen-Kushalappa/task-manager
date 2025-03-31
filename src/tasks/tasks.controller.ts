@@ -7,22 +7,22 @@ export class TasksController {
     constructor(private readonly taskService: TasksService){}
 
     @Get()
-    getAllTasks(): Task[] {
+    async getAllTasks(): Promise<Task[]> {
         return this.taskService.getAllTasks();
     }
 
     @Get(':id')
-    getTaskById(@Param('id') id: string): Task {
+    async getTaskById(@Param('id') id: string): Promise<Task> {
         return this.taskService.getTaskById(id);
     }
 
     @Post()
-    addTask(@Body('title') title: string, @Body('description') description : string): Task {
+    async addTask(@Body('title') title: string, @Body('description') description : string): Promise<Task> {
         return this.taskService.createTask(title, description);
     }
 
     @Patch(':id')
-    updateTask(@Param('id') id: string, @Body('isDone') isDone: boolean): Task{
+    async updateTask(@Param('id') id: string, @Body('isDone') isDone: boolean): Promise<Task>{
         return this.taskService.updateTask(id, isDone);
     }
 
